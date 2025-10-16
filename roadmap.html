@@ -1,0 +1,403 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TechTrust MVP: Interactive Project Dashboard</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <!-- Chosen Palette: Professional Tech - Deep Navy Blue, Electric Blue, Mint Green, Light Grey -->
+    <!-- Application Structure Plan: A single-page dashboard structure with a fixed sidebar for navigation and a main content area. The navigation allows users to switch between key sections of the project plan: 'Overview', 'Team & Roles', 'Integration Contracts', and '15-Day Roadmap'. This structure was chosen for its clarity and resemblance to modern project management tools, making it intuitive for the development team to quickly find relevant information. The roadmap section is interactive, allowing users to filter the view by team member. -->
+    <!-- Visualization & Content Choices: The core information from the blueprint is presented in structured HTML tables and cards for clarity. The primary visualization is a donut chart on the Overview page showing the task distribution among the three team members. This was chosen to give a quick, high-level understanding of the workload balance. Report Info: Team Roles -> Goal: Organize -> Viz/Presentation: HTML Table -> Interaction: Static -> Justification: Clear role definition. Report Info: Data Contracts -> Goal: Inform -> Viz/Presentation: Accordion with Code Blocks -> Interaction: Click to expand -> Justification: Hides complex data by default but allows easy access. Report Info: Roadmap -> Goal: Organize/Track -> Viz/Presentation: Interactive Table -> Interaction: Filter by Member -> Justification: Allows each team member to see their specific tasks across the 15 days. All implemented using Chart.js and vanilla JS. -->
+    <!-- CONFIRMATION: NO SVG graphics used. NO Mermaid JS used. -->
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #F5F5F5;
+        }
+        .main-content {
+            transition: opacity 0.3s ease-in-out;
+        }
+        .sidebar-link {
+            transition: all 0.2s ease;
+        }
+        .sidebar-link:hover, .sidebar-link.active {
+            background-color: #4FC3F7;
+            color: #1A237E;
+        }
+        .task-card {
+            border-left-width: 4px;
+        }
+        .task-m1 { border-color: #4FC3F7; }
+        .task-m2 { border-color: #1A237E; }
+        .task-m3 { border-color: #69F0AE; }
+        .table th {
+            background-color: #1A237E;
+            color: white;
+        }
+        .table td {
+             background-color: white;
+        }
+        .btn-filter.active {
+            background-color: #1A237E;
+            color: white;
+            border-color: #1A237E;
+        }
+        .accordion-content {
+            max-height: 0;
+            overflow: hidden;
+            transition: max-height 0.3s ease-out;
+        }
+        .accordion-header.open + .accordion-content {
+            max-height: 500px;
+        }
+        pre {
+            background-color: #1e293b;
+            color: #f8fafc;
+            padding: 1rem;
+            border-radius: 0.5rem;
+            overflow-x: auto;
+        }
+    </style>
+</head>
+<body class="flex bg-gray-100 min-h-screen">
+
+    <!-- Sidebar -->
+    <aside class="w-64 bg-[#1A237E] text-white flex flex-col fixed h-full">
+        <div class="p-6 text-center border-b border-blue-800">
+            <h1 class="text-2xl font-bold text-white">TechTrust</h1>
+            <p class="text-sm text-blue-300">Project Dashboard</p>
+        </div>
+        <nav class="flex-1 p-4">
+            <a href="#" data-section="overview" class="sidebar-link active block py-3 px-4 rounded-lg font-medium">✨ Overview</a>
+            <a href="#" data-section="roles" class="sidebar-link block py-3 px-4 rounded-lg font-medium">👥 Team & Roles</a>
+            <a href="#" data-section="contracts" class="sidebar-link block py-3 px-4 rounded-lg font-medium">📜 Integration Contracts</a>
+            <a href="#" data-section="roadmap" class="sidebar-link block py-3 px-4 rounded-lg font-medium">🗺️ 15-Day Roadmap</a>
+        </nav>
+        <div class="p-4 border-t border-blue-800 text-center text-xs text-blue-300">
+            <p>&copy; 2025 TechTrust Project</p>
+        </div>
+    </aside>
+
+    <!-- Main Content -->
+    <main class="flex-1 ml-64 p-8">
+        <div id="main-content-container">
+            <!-- Sections will be injected here by JavaScript -->
+        </div>
+    </main>
+
+<script>
+    const AppData = {
+        overview: {
+            title: "Project Overview",
+            intro: "This dashboard provides an interactive guide to the TechTrust MVP project plan. The project's goal is to develop an AI-powered platform for real-time verification and credential-based matching of tech professionals within a 15-day sprint.",
+            stats: [
+                { label: "Timeline", value: "15 Days" },
+                { label: "Team Size", value: "3 Members" },
+                { label: "Core Tech", value: "AI Verification" }
+            ],
+            chartData: {
+                labels: ['M1: Frontend/UX', 'M2: Backend/DB', 'M3: AI/Verification'],
+                data: [15, 15, 15] // Equal tasks per member in this plan
+            }
+        },
+        roles: {
+            title: "Team Roles & Technology Stack",
+            intro: "The project is divided among three specialists, each with clear ownership over a core component. This structure ensures parallel development and expert focus on each part of the application.",
+            members: [
+                { id: "M1", name: "Frontend/UX Specialist", responsibility: "Develop the complete UI and manage all user interaction logic.", tech: "HTML, Vanilla JS, Tailwind CSS" },
+                { id: "M2", name: "Backend/DB Architect", responsibility: "Define the Firestore schema, manage Firebase Auth, and enforce Security Rules.", tech: "Firebase Firestore & Auth" },
+                { id: "M3", name: "AI/Verification Engineer", responsibility: "Implement the core verification logic using the API and define the final result structure.", tech: "Google Gemini API" }
+            ]
+        },
+        contracts: {
+            title: "Mandatory Integration Contracts",
+            intro: "These contracts are non-negotiable agreements on data structure and flow. Adherence is critical for seamless integration between the frontend, backend, and AI services.",
+            items: [
+                {
+                    title: "Contract A: Database Schema (M2's Blueprint)",
+                    content: `
+                        <p class="mb-4">Defines the structure of data stored in Firestore. M1 reads from and M3 writes to these schemas.</p>
+                        <h4 class="font-semibold mb-2">users Collection</h4>
+                        <pre><code class="language-json">{
+  "userId": "String",
+  "userType": "'candidate' | 'recruiter'",
+  "trustScore": "Number (0.0-10.0)"
+}</code></pre>
+                        <h4 class="font-semibold mt-4 mb-2">claims Collection</h4>
+                        <pre><code class="language-json">{
+  "claimText": "String",
+  "supportingLinks": "Array<String>",
+  "verificationStatus": "'PENDING' | 'VERIFIED' | 'UNVERIFIED' | 'PARTIAL'"
+}</code></pre>
+                    `
+                },
+                {
+                    title: "Contract B: AI Output Schema (M3's Blueprint)",
+                    content: `
+                        <p class="mb-4">M3 guarantees the AI service will return a JSON object with this structure, which is then saved to the 'claims' document.</p>
+                        <pre><code class="language-json">{
+  "verificationStatus": "String",
+  "trustScore": "Number (0.0-10.0)",
+  "aiSummary": "String",
+  "verifiedSources": "Array<String>",
+  "dateVerified": "Timestamp"
+}</code></pre>
+                    `
+                },
+                {
+                    title: "Contract C: Critical Data Flow",
+                    content: `
+                        <p class="mb-4">This sequence ensures real-time updates without direct communication between M1 and M3.</p>
+                        <ol class="list-decimal list-inside space-y-2">
+                            <li><strong>M1:</strong> User submits a claim. M1 writes a new 'claims' document to Firestore with status 'PENDING'.</li>
+                            <li><strong>M3:</strong> A listener detects the new 'PENDING' claim. M3 calls the Gemini API for analysis.</li>
+                            <li><strong>M3:</strong> M3 receives the AI result and updates the original 'claims' document in Firestore with the verification data.</li>
+                            <li><strong>M1:</strong> The UI, using a real-time 'onSnapshot' listener, automatically detects the change and updates the claim status card instantly.</li>
+                        </ol>
+                    `
+                }
+            ]
+        },
+        roadmap: {
+            title: "15-Day Collaborative Roadmap",
+            intro: "This day-by-day plan outlines tasks for each team member across three 5-day sprints. Use the filters to isolate tasks for a specific team member.",
+            tasks: [
+                { day: 1, phase: 'Setup', m1: 'Code responsive Login/Register UI (Tailwind).', m2: 'Initialize Firebase and Auth. Connect config.', m3: 'Draft core Gemini prompt for verification and JSON output.' },
+                { day: 2, phase: 'Auth/Profile', m1: 'Build Profile Dashboard shells (Candidate/Recruiter).', m2: 'Implement Sign-In/Sign-Up logic. Store userType.', m3: 'Create 5 static JSON mock results (Contract B).' },
+                { day: 3, phase: 'Data Entry', m1: 'Build responsive Claim Form UI.', m2: 'Create users and claims collections (full schema).', m3: 'Create a local function that returns one of the mock results randomly.' },
+                { day: 4, phase: 'Initial Read', m1: 'Implement onSnapshot to read profile summary from users doc.', m2: 'Write Security Rules V1 (self-only access for users).', m3: 'Define API call try/catch/retry error handling structure.' },
+                { day: 5, phase: 'Submission', m1: 'Design the "Claim Status Card" UI.', m2: 'Implement addDoc for claims, setting status to PENDING.', m3: 'Implement the raw fetch call structure to the Gemini API.' },
+                { day: 6, phase: 'Real-time Pipe', m1: 'Implement onSnapshot on the new claim doc; map status to UI colors.', m2: 'Write Security Rules V2 allowing M3 to write to claims.', m3: 'M3 finalizes logic to read PENDING claim and call Gemini.' },
+                { day: 7, phase: 'Core Integration', m1: 'Full UX/Responsiveness review for the Candidate claim process.', m2: 'Finalize Claim Update Logic for M3\'s writeback.', m3: 'M3 implements the live JSON parsing and update logic.' },
+                { day: 8, phase: 'Recruiter Data', m1: 'Build static list view of candidates (showing name and overall score).', m2: 'Implement logic to aggregate scores into the user\'s overall trustScore.', m3: 'Test AI with 10 challenging edge cases for prompt refinement.' },
+                { day: 9, phase: 'Claim Detail', m1: 'Build a modal/detail view for the full claim analysis.', m2: 'Review Firestore query indexing for list views.', m3: 'M3 tests the AI function with 30 diverse data inputs for JSON stability.' },
+                { day: 10, phase: 'Recruiter Access', m1: 'Build the detailed view for Recruiters to see all a candidate\'s claims.', m2: 'Write Security Rules V3 allowing Recruiter users to read candidate data.', m3: 'Implement a simple cost/token tracking mechanism.' },
+                { day: 11, phase: 'User Feedback', m1: 'Implement custom UI for success/error messages (e.g., toast notifications).', m2: 'Populate 20 mock Candidate and 5 Recruiter profiles for testing.', m3: 'M3 locks down the final, stable prompt version.' },
+                { day: 12, phase: 'Testing Prep', m1: 'Implement simple client-side search/filter mock-ups for the candidate list.', m2: 'Populate 50 complex claims (mixed verified/unverified) for M3 testing.', m3: 'Stress-test the AI function with seeded data.' },
+                { day: 13, phase: 'Polish', m1: 'Final UI Audit: accessibility, consistent styling, and branding checks.', m2: 'Performance review of database reads and cost optimization.', m3: 'M3 writes final documentation on AI methodology and usage.' },
+                { day: 14, phase: 'QA', m1: 'M1 runs full End-to-End tests for all Candidate and Recruiter flows.', m2: 'M2 attempts unauthorized data access to prove security rules V3 are robust.', m3: 'M3/M2 Integration Test: Verify data types and field integrity post-AI processing.' },
+                { day: 15, phase: 'Handoff', m1: 'M1 documents UI components and prepares a feature demo script.', m2: 'M2 cleans up Firebase initialization, error handling, and code comments.', m3: 'M3 finalizes slides/talking points on AI architecture.' }
+            ]
+        }
+    };
+
+    const mainContainer = document.getElementById('main-content-container');
+    let overviewChart = null;
+
+    function renderOverview() {
+        const data = AppData.overview;
+        let statsHtml = data.stats.map(stat => `
+            <div class="bg-white p-4 rounded-lg shadow">
+                <p class="text-sm text-gray-500">${stat.label}</p>
+                <p class="text-2xl font-bold text-[#1A237E]">${stat.value}</p>
+            </div>
+        `).join('');
+
+        mainContainer.innerHTML = `
+            <div class="main-content">
+                <h2 class="text-3xl font-bold text-gray-800 mb-2">${data.title}</h2>
+                <p class="text-gray-600 mb-6">${data.intro}</p>
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+                    ${statsHtml}
+                </div>
+                <div class="bg-white p-6 rounded-lg shadow">
+                    <h3 class="text-xl font-semibold mb-4 text-gray-700">Task Distribution Overview</h3>
+                     <div class="chart-container" style="position: relative; height: 40vh; max-height: 350px; width: 100%; max-width: 350px; margin: auto;">
+                        <canvas id="overviewChart"></canvas>
+                    </div>
+                </div>
+            </div>
+        `;
+
+        const ctx = document.getElementById('overviewChart').getContext('2d');
+        if(overviewChart) overviewChart.destroy();
+        overviewChart = new Chart(ctx, {
+            type: 'doughnut',
+            data: {
+                labels: data.chartData.labels,
+                datasets: [{
+                    label: 'Tasks per Member',
+                    data: data.chartData.data,
+                    backgroundColor: [
+                        '#4FC3F7', // M1
+                        '#1A237E', // M2
+                        '#69F0AE'  // M3
+                    ],
+                    borderColor: '#FFFFFF',
+                    borderWidth: 4
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        position: 'bottom',
+                        labels: {
+                            font: {
+                                size: 14,
+                                family: 'Inter'
+                            }
+                        }
+                    }
+                },
+                cutout: '70%'
+            }
+        });
+    }
+
+    function renderRoles() {
+        const data = AppData.roles;
+        let membersHtml = data.members.map(member => `
+            <div class="bg-white p-6 rounded-lg shadow task-card task-${member.id.toLowerCase()}">
+                <h3 class="text-xl font-bold text-[#1A237E]">${member.id}: ${member.name}</h3>
+                <p class="text-gray-700 my-2">${member.responsibility}</p>
+                <p class="text-sm text-gray-500 mt-4"><strong>Primary Tech:</strong> ${member.tech}</p>
+            </div>
+        `).join('');
+
+        mainContainer.innerHTML = `
+             <div class="main-content">
+                <h2 class="text-3xl font-bold text-gray-800 mb-2">${data.title}</h2>
+                <p class="text-gray-600 mb-6">${data.intro}</p>
+                <div class="space-y-6">
+                    ${membersHtml}
+                </div>
+            </div>
+        `;
+    }
+
+    function renderContracts() {
+        const data = AppData.contracts;
+        let contractsHtml = data.items.map(item => `
+            <div class="bg-white rounded-lg shadow">
+                <button class="accordion-header w-full p-6 text-left text-xl font-semibold text-[#1A237E] flex justify-between items-center">
+                    <span>${item.title}</span>
+                    <span class="transform transition-transform duration-300">▼</span>
+                </button>
+                <div class="accordion-content px-6 pb-6">
+                    ${item.content}
+                </div>
+            </div>
+        `).join('');
+
+        mainContainer.innerHTML = `
+             <div class="main-content">
+                <h2 class="text-3xl font-bold text-gray-800 mb-2">${data.title}</h2>
+                <p class="text-gray-600 mb-6">${data.intro}</p>
+                <div class="space-y-4">
+                    ${contractsHtml}
+                </div>
+            </div>
+        `;
+    }
+
+    function renderRoadmap(filter = 'all') {
+        const data = AppData.roadmap;
+        const tableRows = data.tasks
+            .map(task => {
+                const m1Visible = filter === 'all' || filter === 'm1';
+                const m2Visible = filter === 'all' || filter === 'm2';
+                const m3Visible = filter === 'all' || filter === 'm3';
+
+                return `
+                <tr class="border-b">
+                    <td class="p-4 font-bold text-center">${task.day}</td>
+                    <td class="p-4 text-gray-600 text-sm">${task.phase}</td>
+                    ${m1Visible ? `<td class="p-4 task-card task-m1">${task.m1}</td>` : ''}
+                    ${m2Visible ? `<td class="p-4 task-card task-m2">${task.m2}</td>` : ''}
+                    ${m3Visible ? `<td class="p-4 task-card task-m3">${task.m3}</td>` : ''}
+                </tr>
+            `}).join('');
+        
+        const colCount = filter === 'all' ? 5 : 3;
+
+        mainContainer.innerHTML = `
+            <div class="main-content">
+                <h2 class="text-3xl font-bold text-gray-800 mb-2">${data.title}</h2>
+                <p class="text-gray-600 mb-6">${data.intro}</p>
+                <div class="flex items-center space-x-2 mb-4">
+                    <span class="font-medium">Filter by Team Member:</span>
+                    <button data-filter="all" class="btn-filter ${filter === 'all' ? 'active' : ''} px-4 py-2 border rounded-full text-sm">All</button>
+                    <button data-filter="m1" class="btn-filter ${filter === 'm1' ? 'active' : ''} px-4 py-2 border rounded-full text-sm">M1 (Frontend)</button>
+                    <button data-filter="m2" class="btn-filter ${filter === 'm2' ? 'active' : ''} px-4 py-2 border rounded-full text-sm">M2 (Backend)</button>
+                    <button data-filter="m3" class="btn-filter ${filter === 'm3' ? 'active' : ''} px-4 py-2 border rounded-full text-sm">M3 (AI)</button>
+                </div>
+                <div class="overflow-x-auto bg-white rounded-lg shadow">
+                    <table class="w-full text-sm text-left text-gray-700 table">
+                        <thead class="text-xs uppercase">
+                            <tr>
+                                <th scope="col" class="p-4 text-center">Day</th>
+                                <th scope="col" class="p-4">Phase Goal</th>
+                                ${filter === 'all' || filter === 'm1' ? `<th scope="col" class="p-4">M1: Frontend & UX</th>` : ''}
+                                ${filter === 'all' || filter === 'm2' ? `<th scope="col" class="p-4">M2: Backend & DB</th>` : ''}
+                                ${filter === 'all' || filter === 'm3' ? `<th scope="col" class="p-4">M3: AI & Verification</th>` : ''}
+                            </tr>
+                        </thead>
+                        <tbody>
+                           ${tableRows}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        `;
+    }
+
+    function navigate(section) {
+        mainContainer.style.opacity = 0;
+        
+        setTimeout(() => {
+            switch (section) {
+                case 'overview': renderOverview(); break;
+                case 'roles': renderRoles(); break;
+                case 'contracts': renderContracts(); break;
+                case 'roadmap': renderRoadmap(); break;
+                default: renderOverview();
+            }
+            mainContainer.style.opacity = 1;
+
+            document.querySelectorAll('.sidebar-link').forEach(link => {
+                link.classList.toggle('active', link.dataset.section === section);
+            });
+        }, 300);
+    }
+    
+    document.addEventListener('DOMContentLoaded', () => {
+        const sidebar = document.querySelector('aside');
+        
+        sidebar.addEventListener('click', (e) => {
+            if (e.target.tagName === 'A') {
+                e.preventDefault();
+                const section = e.target.dataset.section;
+                if (section) navigate(section);
+            }
+        });
+
+        mainContainer.addEventListener('click', (e) => {
+            // Roadmap filter logic
+            if (e.target.classList.contains('btn-filter')) {
+                const filter = e.target.dataset.filter;
+                renderRoadmap(filter);
+            }
+
+            // Accordion logic
+            if(e.target.classList.contains('accordion-header')) {
+                e.target.classList.toggle('open');
+                const content = e.target.nextElementSibling;
+                if (content.style.maxHeight) {
+                    content.style.maxHeight = null;
+                } else {
+                    content.style.maxHeight = content.scrollHeight + "px";
+                }
+            }
+        });
+
+        // Initial load
+        navigate('overview');
+    });
+
+</script>
+</body>
+</html>
